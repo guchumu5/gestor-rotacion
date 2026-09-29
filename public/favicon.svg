@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Gestor de rotación">
-  <rect width="64" height="64" rx="16" fill="#c8102e"/>
-  <path fill="#fff" d="M20 18h16c8 0 14 6 14 14s-6 14-14 14H24v-8h12c3.3 0 6-2.7 6-6s-2.7-6-6-6H20V18z"/>
-</svg>

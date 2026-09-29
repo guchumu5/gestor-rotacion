@@ -1,43 +1,78 @@
 # Gestor de rotación
 
-App web móvil para anotar **quién compra, cuándo y cuánto**. Sirve para ver medias mensuales y hacerse una idea de cuánto producto conviene tener preparado.
+App PHP clásica (sin React/Vite/Node) para que el productor registre **quién compró, cuándo y cuánto**, y vea medias mensuales, mejores clientes y mix de producto.
 
-Los datos se guardan en el navegador (`localStorage`). No hace falta servidor.
+Contraseña de acceso: **`hola`** (sesión PHP en servidor).
 
-## Cómo usarla
+## Requisitos
 
-1. Entra con la contraseña de acceso del productor: **hola** (candado local en el navegador, no es un login de servidor).
-2. Pulsa **Registrar** y anota cliente, producto, cantidad e **importe total cobrado**.
-3. Mira **Resumen** para medias, mejores clientes y mezcla de producto.
-4. En **Fichas** puedes renombrar clientes y productos.
+- PHP 8.0 o superior (extensiones: `pdo_mysql`, `session`, `mbstring`)
+- MySQL 5.7+ / 8.x o MariaDB
+- Navegador moderno (pensado para iPhone ~390px)
 
-Clientes de ejemplo: SanPablo, Mecanico, Fr. Productos de ejemplo: Rojo, Ches, Win.
+## Instalación
 
-## Arranque local
-
-```bash
-npm install
-npm run dev
-```
-
-Abre la URL que muestre Vite (normalmente `http://localhost:5173`).
-
-## Compilar para publicar
+1. Crea la base de datos e importa el esquema:
 
 ```bash
-npm run build
+mysql -u root -p < schema.sql
 ```
 
-El resultado queda en `dist/`. Puedes servir esa carpeta en cualquier hosting estático.
+O desde un cliente MySQL: ejecuta el contenido de `schema.sql` (crea `gestor_rotacion`, tablas y seeds: clientes SanPablo / Mecanico / Fr y productos Rojo / Ches / Win).
 
-### GitHub Pages u otro estático
+2. Copia la configuración:
 
-1. Publica el contenido de `dist/` (o conecta Pages al workflow de build).
-2. La app usa rutas relativas (`base: './'`), así que también funciona abriendo los ficheros como sitio estático.
-3. En iPhone: Safari → Compartir → **Añadir a pantalla de inicio** para usarla como mini-app.
+```bash
+cp config.example.php config.php
+```
 
-## Notas
+Edita `config.php` con host, nombre de BD, usuario y contraseña MySQL. **No subas `config.php` a git** (está en `.gitignore`).
 
-- El acceso es una frase compartida en el cliente. Sirve para un uso intranet/local, no sustituye un login de verdad.
-- Los datos viven en ese navegador. Si cambias de móvil o borras datos del sitio, se pierde el historial (hasta que haya backend).
-- Para resetear, borra los datos de la web en el navegador o la clave `gestor-rotacion:v1` de `localStorage`.
+3. Arranca el servidor embebido de PHP desde la carpeta del proyecto:
+
+```bash
+php -S localhost:8080
+```
+
+Abre http://localhost:8080/login.php e introduce `hola`.
+
+### Apache / hosting
+
+Apunta el DocumentRoot a esta carpeta. No hace falta rewrite especial: las páginas son `.php` directas.
+
+## Uso rápido (móvil)
+
+- **Añadir**: botón grande «Registrar» — elige cliente (o crea uno), producto, cantidad, importe total cobrado y fecha.
+- **Resumen**: medias €/uds por mes y semana, comparación mes actual vs anterior, mejores clientes, compra típica, mix Rojo/Ches/Win, últimos movimientos.
+- **Historial**: filtros por cliente, producto y rango de fechas; toca un pedido para editarlo.
+- **Clientes / Productos**: renombrar; si tienen historial se **archivan** (soft-delete) para no perder datos.
+
+## Notas iPhone
+
+- Meta `viewport` y `apple-mobile-web-app-capable` para uso a pantalla casi completa.
+- Navegación inferior fija, inputs grandes, botones de pulgar.
+- Color corporativo rojo `#c41230` sobre blanco.
+
+## Estructura
+
+```
+config.example.php   # plantilla de credenciales
+schema.sql           # tablas + seeds
+login.php            # acceso
+index.php            # dashboard
+movimiento.php       # alta / edición rápida
+clientes.php
+productos.php
+historial.php
+logout.php
+includes/            # sesión, PDO, CSRF, stats, layout
+assets/css/app.css
+assets/js/app.js
+```
+
+## Seguridad básica
+
+- Contraseña compartida (no hay cuentas de usuario).
+- Sesión PHP con regeneración de ID al login.
+- Tokens CSRF en formularios POST.
+- Consultas PDO preparadas.

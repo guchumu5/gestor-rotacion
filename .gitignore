@@ -1,24 +1,27 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Credenciales reales
+config.php
 
-node_modules
-dist
-dist-ssr
+# Dependencias (si hubiera)
+vendor/
+
+# Sistema
+.DS_Store
+*.log
+logs/
+
+# Restos de Node / Vite (por si quedan)
+node_modules/
+dist/
+dist-ssr/
 *.local
 
-# Editor directories and files
+# Editores
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+.vite/
