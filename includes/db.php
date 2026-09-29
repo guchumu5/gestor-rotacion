@@ -2,34 +2,86 @@
 declare(strict_types=1);
 
 /**
- * @param array{host:string,port:int,name:string,user:string,pass:string,charset:string} $db
+ * @param array{host?:mixed,port?:mixed,name?:mixed,user?:mixed,pass?:mixed,charset?:mixed} $db
  */
 function db_connect(array $db): PDO
 {
+    if (!class_exists('PDO')) {
+        app_error_page(
+            'Falta la extensión PDO',
+            'PHP no tiene la extensión <code>PDO</code>. En Plesk/Apache activa <code>pdo_mysql</code> para esta versión de PHP.'
+        );
+    }
+
+    $required = ['host', 'port', 'name', 'user', 'pass', 'charset'];
+    foreach ($required as $key) {
+        if (!array_key_exists($key, $db)) {
+            app_error_page(
+                'config.php incompleto',
+                'Falta la clave <code>db.' . e($key) . '</code>. Copia de nuevo <code>config.example.php</code> a <code>config.php</code> y ajusta los valores.'
+            );
+        }
+    }
+
     $dsn = sprintf(
         'mysql:host=%s;port=%d;dbname=%s;charset=%s',
-        $db['host'],
+        (string) $db['host'],
         (int) $db['port'],
-        $db['name'],
-        $db['charset']
+        (string) $db['name'],
+        (string) $db['charset']
     );
 
     try {
-        $pdo = new PDO($dsn, $db['user'], $db['pass'], [
+        $pdo = new PDO($dsn, (string) $db['user'], (string) $db['pass'], [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
         ]);
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Base de datos</title></head><body style="font-family:system-ui;padding:2rem;max-width:40rem;margin:auto">';
-        echo '<h1>No se pudo conectar a MySQL</h1>';
-        echo '<p>Revisa <code>config.php</code> e importa <code>schema.sql</code>.</p>';
-        echo '<p style="color:#666">' . e($e->getMessage()) . '</p></body></html>';
-        exit;
+    } catch (Throwable $e) {
+        app_error_page(
+            'No se pudo conectar a MySQL',
+            'Revisa host, nombre de base de datos, usuario y contraseña en <code>config.php</code>.',
+            $e
+        );
+        // app_error_page() termina el script; esto solo satisface al analizador.
+        throw $e;
     }
 
+    db_require_schema($pdo);
+
     return $pdo;
+}
+
+function db_require_schema(PDO $pdo): void
+{
+    $needed = ['clients', 'products', 'movements'];
+    $missing = [];
+
+    try {
+        foreach ($needed as $table) {
+            // SHOW TABLES LIKE es seguro: nombres fijos del esquema de la app.
+            $stmt = $pdo->query('SHOW TABLES LIKE ' . $pdo->quote($table));
+            if ($stmt === false || $stmt->fetchColumn() === false) {
+                $missing[] = $table;
+            }
+        }
+    } catch (Throwable $e) {
+        app_error_page(
+            'No se pudo comprobar el esquema',
+            'La conexión a MySQL funcionó, pero no se pudieron listar las tablas. Comprueba permisos del usuario e importa <code>schema.sql</code>.',
+            $e
+        );
+    }
+
+    if ($missing !== []) {
+        $safe = array_map(static fn(string $t): string => e($t), $missing);
+        app_error_page(
+            'Faltan tablas en MySQL',
+            'La base de datos conecta, pero no están las tablas necesarias (<code>'
+            . implode('</code>, <code>', $safe)
+            . '</code>). Importa <code>schema.sql</code> en la misma base configurada en <code>config.php</code>.'
+        );
+    }
 }
 
 function clients_all(PDO $pdo, bool $onlyActive = false): array

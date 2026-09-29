@@ -6,6 +6,43 @@ function e(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+/**
+ * Página de error visible (evita pantalla blanca 500 con display_errors=Off).
+ * Registra el detalle técnico en el log de PHP.
+ */
+function app_error_page(string $title, string $message, ?Throwable $exception = null, int $status = 500): void
+{
+    // Evitar bucles si header()/echo disparan warnings convertidos en excepciones.
+    restore_error_handler();
+    restore_exception_handler();
+
+    if ($exception !== null) {
+        error_log('[gestor-rotacion] ' . $exception->getMessage() . ' in ' . $exception->getFile() . ':' . $exception->getLine());
+    } else {
+        error_log('[gestor-rotacion] ' . $title . ' — ' . strip_tags($message));
+    }
+
+    if (!headers_sent()) {
+        http_response_code($status);
+        header('Content-Type: text/html; charset=utf-8');
+    }
+
+    $detail = $exception !== null ? $exception->getMessage() : '';
+
+    echo '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">';
+    echo '<meta name="viewport" content="width=device-width,initial-scale=1">';
+    echo '<title>' . e($title) . '</title></head>';
+    echo '<body style="font-family:system-ui,sans-serif;padding:2rem;max-width:40rem;margin:auto;line-height:1.45;color:#111">';
+    echo '<h1 style="font-size:1.5rem;margin:0 0 .75rem">' . e($title) . '</h1>';
+    echo '<p style="margin:0 0 1rem">' . $message . '</p>';
+    if ($detail !== '') {
+        echo '<p style="color:#666;font-size:.95rem;word-break:break-word"><strong>Detalle:</strong> ' . e($detail) . '</p>';
+    }
+    echo '<p style="color:#666;font-size:.9rem;margin-top:1.5rem">Si acabas de instalar la app: revisa <code>config.php</code> e importa <code>schema.sql</code> en MySQL.</p>';
+    echo '</body></html>';
+    exit;
+}
+
 function redirect(string $path): void
 {
     header('Location: ' . $path);
