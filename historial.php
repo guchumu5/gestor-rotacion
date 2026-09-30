@@ -45,7 +45,6 @@ $rows = $stmt->fetchAll();
 foreach ($rows as &$row) {
     $priceRaw = $row['price'];
     $row['unit_price'] = $priceRaw === null ? null : (float) $priceRaw;
-    $row['line_total'] = line_total($row['quantity'], $row['unit_price']);
 }
 unset($row);
 
@@ -57,7 +56,7 @@ require __DIR__ . '/includes/header.php';
   <div class="page-head">
     <p class="eyebrow mb-1" style="color:var(--red)">Pedidos</p>
     <h1 class="page-title">Historial</h1>
-    <p class="page-sub">Filtra por cliente, producto o fechas.</p>
+    <p class="page-sub">Filtra por cliente, producto o fechas. Unidades siempre visibles.</p>
   </div>
 
   <form method="get" class="panel">
@@ -111,11 +110,11 @@ require __DIR__ . '/includes/header.php';
         <a class="mv-card text-decoration-none text-dark" href="movimiento.php?id=<?= (int) $row['id'] ?>">
           <div class="mv-card-top">
             <strong><?= e($row['client_name']) ?></strong>
-            <strong><?= e(money_or_dash($row['line_total'])) ?></strong>
+            <strong><?= e(qty_es($row['quantity'])) ?> uds</strong>
           </div>
           <div class="list-meta">
-            <?= e($row['movement_date']) ?> · <?= e($row['product_name']) ?> · <?= e(qty_es($row['quantity'])) ?> uds
-            · ud <?= e(unit_price_es($row['unit_price'])) ?>
+            <?= e($row['movement_date']) ?> · <?= e($row['product_name']) ?>
+            <span data-price-col> · <?= price_span($row['unit_price']) ?></span>
             <?php if ($row['note']): ?> · <?= e($row['note']) ?><?php endif; ?>
           </div>
         </a>
@@ -131,8 +130,7 @@ require __DIR__ . '/includes/header.php';
               <th>Cliente</th>
               <th>Producto</th>
               <th class="text-end">Cant.</th>
-              <th class="text-end">P. ud</th>
-              <th class="text-end">Total</th>
+              <th class="text-end" data-price-col>P. ud</th>
               <th></th>
             </tr>
           </thead>
@@ -143,8 +141,7 @@ require __DIR__ . '/includes/header.php';
                 <td><a class="client-link" href="<?= e(client_url((int) $row['client_id'])) ?>&amp;back=historial"><?= e($row['client_name']) ?></a></td>
                 <td><?= e($row['product_name']) ?></td>
                 <td class="text-end"><?= e(qty_es($row['quantity'])) ?></td>
-                <td class="text-end"><?= e(unit_price_es($row['unit_price'])) ?></td>
-                <td class="text-end"><?= e(money_or_dash($row['line_total'])) ?></td>
+                <td class="text-end" data-price-col><?= price_span($row['unit_price']) ?></td>
                 <td class="text-end"><a href="movimiento.php?id=<?= (int) $row['id'] ?>">Editar</a></td>
               </tr>
             <?php endforeach; ?>

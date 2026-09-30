@@ -127,7 +127,7 @@ require __DIR__ . '/includes/header.php';
   <div class="page-head">
     <p class="eyebrow mb-1" style="color:var(--red)"><?= $isEdit ? 'Editar' : 'Rápido' ?></p>
     <h1 class="page-title"><?= $isEdit ? 'Editar movimiento' : 'Añadir pedido' ?></h1>
-    <p class="page-sub">Pocos toques. Pensado para el iPhone.</p>
+    <p class="page-sub">Cantidad primero. Precio unidad opcional (oculto con el ojo).</p>
   </div>
 
   <?php if ($error): ?>
@@ -203,18 +203,20 @@ require __DIR__ . '/includes/header.php';
       </div>
     </div>
 
-    <div class="mb-3">
+    <div class="mb-3 price-field-block" data-price-field>
       <label class="form-label" for="price">Precio unidad (€) <span class="text-muted fw-normal">opcional</span></label>
       <input
-        class="form-control"
+        class="form-control price-real-input"
         type="text"
         inputmode="decimal"
         name="price"
         id="price"
-        value="<?= e($priceValue) ?>"
-        placeholder="Ej. 12 (puedes dejarlo vacío)"
+        value=""
+        data-price-value="<?= e($priceValue) ?>"
+        placeholder="Ej. 12 (opcional)"
+        autocomplete="off"
       >
-      <div class="form-text">Precio por unidad. Vacío = sin precio (normal). El total se calcula solo si lo rellenas.</div>
+      <div class="form-text">Opcional. Se guarda, pero solo se ve si activas el ojo del encabezado. Vacío = sin precio.</div>
     </div>
 
     <div class="mb-3">

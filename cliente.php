@@ -37,7 +37,7 @@ require __DIR__ . '/includes/header.php';
     <p class="eyebrow mb-1" style="color:var(--red)">Cliente</p>
     <h1 class="page-title"><?= e($client['name']) ?></h1>
     <p class="page-sub">
-      Historial de suministros
+      Historial de suministros (unidades y huecos)
       <?= !(int) $client['active'] ? ' · <span class="badge text-bg-secondary">Archivado</span>' : '' ?>
     </p>
   </div>
@@ -80,11 +80,11 @@ require __DIR__ . '/includes/header.php';
         <a class="mv-card text-decoration-none text-dark" href="movimiento.php?id=<?= (int) $row['id'] ?>">
           <div class="mv-card-top">
             <strong><?= e($row['product_name']) ?></strong>
-            <strong><?= e(money_or_dash($row['line_total'])) ?></strong>
+            <strong><?= e(qty_es($row['quantity'])) ?> uds</strong>
           </div>
           <div class="list-meta">
-            <?= e($row['movement_date']) ?> · <?= e(qty_es($row['quantity'])) ?> uds
-            · ud <?= e(unit_price_es($row['unit_price'])) ?>
+            <?= e($row['movement_date']) ?>
+            <span data-price-col> · <?= price_span($row['unit_price']) ?></span>
             <?php if ($row['note']): ?> · <?= e($row['note']) ?><?php endif; ?>
           </div>
           <div class="gap-chip">
@@ -106,8 +106,7 @@ require __DIR__ . '/includes/header.php';
               <th>Fecha</th>
               <th>Producto</th>
               <th class="text-end">Cant.</th>
-              <th class="text-end">P. ud</th>
-              <th class="text-end">Total</th>
+              <th class="text-end" data-price-col>P. ud</th>
               <th>Hueco</th>
               <th></th>
             </tr>
@@ -118,8 +117,7 @@ require __DIR__ . '/includes/header.php';
                 <td><?= e($row['movement_date']) ?></td>
                 <td><?= e($row['product_name']) ?></td>
                 <td class="text-end"><?= e(qty_es($row['quantity'])) ?></td>
-                <td class="text-end"><?= e(unit_price_es($row['unit_price'])) ?></td>
-                <td class="text-end"><?= e(money_or_dash($row['line_total'])) ?></td>
+                <td class="text-end" data-price-col><?= price_span($row['unit_price']) ?></td>
                 <td>
                   <?php if ($row['gap_days'] === null): ?>
                     <span class="text-muted">Primer pedido</span>

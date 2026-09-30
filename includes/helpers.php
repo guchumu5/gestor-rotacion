@@ -133,6 +133,22 @@ function unit_price_es(float|int|string|null $price): string
 }
 
 /**
+ * Precio unitario en HTML: ocultable con el ojo (data-price).
+ * Sin precio → "—"; con precio → valor + máscara "•••" (CSS/JS).
+ */
+function price_span(float|int|string|null $price): string
+{
+    if ($price === null || $price === '') {
+        return '<span class="text-muted">—</span>';
+    }
+    $text = e(money_es($price));
+    return '<span class="price-wrap" data-price>'
+        . '<span class="price-value">' . $text . '</span>'
+        . '<span class="price-mask" aria-hidden="true">•••</span>'
+        . '</span>';
+}
+
+/**
  * Total de línea = qty * precio unitario.
  * Devuelve null si no hay precio (no tratar como 0 €).
  */

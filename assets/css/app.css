@@ -120,12 +120,100 @@ body.login-body {
   text-overflow: ellipsis;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.price-toggle-btn {
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  color: #fff !important;
+  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
+}
+
+.price-toggle-btn:hover,
+.price-toggle-btn:focus {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+}
+
+.price-toggle-btn .price-icon {
+  display: block;
+}
+
+.price-toggle-btn .price-icon-open {
+  display: none;
+}
+
+body.prices-visible .price-toggle-btn .price-icon-slash,
+html.prices-visible .price-toggle-btn .price-icon-slash {
+  display: none;
+}
+
+body.prices-visible .price-toggle-btn .price-icon-open,
+html.prices-visible .price-toggle-btn .price-icon-open {
+  display: block;
+}
+
+body:not(.prices-visible) .price-toggle-btn .price-icon-open {
+  display: none;
+}
+
+/* Precios ocultos por defecto: no flash de € */
+.price-wrap[data-price] .price-value {
+  display: none;
+}
+
+.price-wrap[data-price] .price-mask {
+  display: inline;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+body.prices-visible .price-wrap[data-price] .price-value,
+html.prices-visible .price-wrap[data-price] .price-value {
+  display: inline;
+}
+
+body.prices-visible .price-wrap[data-price] .price-mask,
+html.prices-visible .price-wrap[data-price] .price-mask {
+  display: none;
+}
+
+body:not(.prices-visible) [data-price-col],
+html:not(.prices-visible) [data-price-col] {
+  display: none !important;
+}
+
+body:not(.prices-visible) .price-field-block .price-real-input {
+  -webkit-text-security: disc;
+  color: transparent;
+  text-shadow: 0 0 0 var(--muted);
+}
+
+body:not(.prices-visible) .price-field-block.is-masked .price-real-input {
+  caret-color: transparent;
+}
+
 .logout-btn {
   border-color: rgba(255, 255, 255, 0.55) !important;
   color: #fff !important;
   border-radius: 999px;
   padding: 0.35rem 0.85rem;
   font-weight: 600;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .logout-btn:hover,
