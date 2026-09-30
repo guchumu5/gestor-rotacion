@@ -43,8 +43,53 @@ function app_error_page(string $title, string $message, ?Throwable $exception = 
     exit;
 }
 
+/**
+ * iOS standalone: un 302 tras POST (o a veces GET) abre Safari y sale del webview.
+ * Detectamos el flag de formulario o la cookie que pone el JS en modo standalone.
+ */
+function wants_standalone_nav(): bool
+{
+    if (isset($_POST['standalone']) && (string) $_POST['standalone'] === '1') {
+        return true;
+    }
+    if (isset($_COOKIE['gr_standalone']) && (string) $_COOKIE['gr_standalone'] === '1') {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Redirección que no rompe el modo standalone de iOS (sin header Location).
+ */
+function standalone_redirect_page(string $path): void
+{
+    if (!headers_sent()) {
+        header('Content-Type: text/html; charset=utf-8');
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+    }
+
+    $href = e($path);
+    $jsPath = json_encode($path, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+
+    echo '<!DOCTYPE html><html lang="es"><head>';
+    echo '<meta charset="utf-8">';
+    echo '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">';
+    echo '<meta name="apple-mobile-web-app-capable" content="yes">';
+    echo '<meta name="mobile-web-app-capable" content="yes">';
+    echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">';
+    echo '<title>Redirigiendo…</title>';
+    echo '<script>location.replace(' . $jsPath . ');</script>';
+    echo '</head><body style="font-family:system-ui,sans-serif;padding:2rem;text-align:center">';
+    echo '<p><a href="' . $href . '">Continuar</a></p>';
+    echo '</body></html>';
+    exit;
+}
+
 function redirect(string $path): void
 {
+    if (wants_standalone_nav()) {
+        standalone_redirect_page($path);
+    }
     header('Location: ' . $path);
     exit;
 }

@@ -48,8 +48,62 @@ function db_connect(array $db): PDO
     }
 
     db_require_schema($pdo);
+    db_migrate_unit_price($pdo);
 
     return $pdo;
+}
+
+/**
+ * Migración idempotente: amount → price (unitario, NULL permitido).
+ * No convierte totales antiguos a unitarios; solo renombra / ajusta NULL.
+ * Si ALTER falla, se registra y se sigue; el error visible aparece al consultar.
+ */
+function db_migrate_unit_price(PDO $pdo): void
+{
+    static $ran = false;
+    if ($ran) {
+        return;
+    }
+    $ran = true;
+
+    try {
+        $stmt = $pdo->query('SHOW COLUMNS FROM movements');
+        if ($stmt === false) {
+            return;
+        }
+
+        $cols = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $field = strtolower((string) ($row['Field'] ?? ''));
+            if ($field !== '') {
+                $cols[$field] = $row;
+            }
+        }
+
+        $comment = 'Precio unitario (€); NULL si no se indica. Total línea = quantity * price';
+
+        if (isset($cols['amount']) && !isset($cols['price'])) {
+            $pdo->exec(
+                'ALTER TABLE movements
+                 CHANGE COLUMN amount price DECIMAL(12,2) NULL
+                 COMMENT ' . $pdo->quote($comment)
+            );
+            return;
+        }
+
+        if (isset($cols['price'])) {
+            $isNullable = strtoupper((string) ($cols['price']['Null'] ?? '')) === 'YES';
+            if (!$isNullable) {
+                $pdo->exec(
+                    'ALTER TABLE movements
+                     MODIFY COLUMN price DECIMAL(12,2) NULL
+                     COMMENT ' . $pdo->quote($comment)
+                );
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('[gestor-rotacion] migrate unit price: ' . $e->getMessage());
+    }
 }
 
 function db_require_schema(PDO $pdo): void

@@ -3,7 +3,8 @@
 --
 -- movements.price = precio UNITARIO (€). NULL si no se indica.
 -- Total de línea = quantity * price (solo cuando price no es NULL).
--- Instalaciones ya existentes: ejecutar también sql/migrate_unit_price.sql
+-- Instalaciones ya existentes: la app migra sola al conectar (amount→price);
+-- también puedes ejecutar sql/migrate_unit_price.sql a mano.
 
 CREATE DATABASE IF NOT EXISTS gestor_rotacion
   CHARACTER SET utf8mb4

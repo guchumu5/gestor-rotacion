@@ -12,7 +12,29 @@ $error = '';
 if (request_method() === 'POST') {
     csrf_verify();
     $password = post_string('password');
-    if (attempt_login($password, (string) $config['app_password'])) {
+    $ok = attempt_login($password, (string) $config['app_password']);
+
+    $wantsJson = post_string('ajax') === '1'
+        || (
+            isset($_SERVER['HTTP_X_REQUESTED_WITH'])
+            && strtolower((string) $_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+        );
+
+    if ($wantsJson) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            header('Cache-Control: no-store');
+        }
+        if ($ok) {
+            echo json_encode(['ok' => true, 'redirect' => 'index.php'], JSON_UNESCAPED_UNICODE);
+        } else {
+            http_response_code(401);
+            echo json_encode(['ok' => false, 'error' => 'Contraseña incorrecta.'], JSON_UNESCAPED_UNICODE);
+        }
+        exit;
+    }
+
+    if ($ok) {
         redirect('index.php');
     }
     $error = 'Contraseña incorrecta.';
@@ -35,10 +57,8 @@ $pageTitle = 'Entrar · Gestor de rotación';
     </div>
 
     <div class="login-card">
-      <?php if ($error): ?>
-        <div class="alert alert-danger py-2"><?= e($error) ?></div>
-      <?php endif; ?>
-      <form method="post" autocomplete="current-password">
+      <div class="alert alert-danger py-2" id="login-error"<?= $error === '' ? ' hidden' : '' ?>><?= e($error !== '' ? $error : '') ?></div>
+      <form method="post" id="login-form" autocomplete="current-password">
         <?= csrf_field() ?>
         <label class="form-label" for="password">Contraseña</label>
         <input
@@ -55,5 +75,6 @@ $pageTitle = 'Entrar · Gestor de rotación';
       </form>
     </div>
   </div>
+  <script src="assets/js/app.js"></script>
 </body>
 </html>
