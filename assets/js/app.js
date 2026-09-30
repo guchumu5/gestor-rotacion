@@ -245,29 +245,6 @@
     btn.setAttribute('title', show ? 'Ocultar precios' : 'Mostrar precios');
   }
 
-  function applyPriceInputVisibility(show) {
-    document.querySelectorAll('[data-price-value]').forEach(function (input) {
-      var stored = input.getAttribute('data-price-value') || '';
-      var block = input.closest('[data-price-field]');
-      if (show) {
-        if (input.value === '' && stored !== '') {
-          input.value = stored;
-        }
-        input.readOnly = false;
-        input.placeholder = 'Ej. 12 (opcional)';
-        if (block) block.classList.remove('is-masked');
-      } else {
-        if (input.value !== '') {
-          input.setAttribute('data-price-value', input.value);
-        }
-        input.value = '';
-        input.readOnly = true;
-        input.placeholder = 'Oculto · toca el ojo';
-        if (block) block.classList.add('is-masked');
-      }
-    });
-  }
-
   function setPricesVisible(show) {
     document.body.classList.toggle('prices-visible', show);
     document.documentElement.classList.toggle('prices-visible', show);
@@ -275,12 +252,11 @@
       localStorage.setItem(PRICE_KEY, show ? '1' : '0');
     } catch (e) {}
     syncPriceToggleUi(show);
-    applyPriceInputVisibility(show);
   }
 
   // Estado inicial (el script del header ya puso la clase si hacía falta)
+  // El ojo solo afecta precios ya guardados en listas; el input del formulario siempre visible.
   syncPriceToggleUi(pricesAreVisible());
-  applyPriceInputVisibility(pricesAreVisible());
 
   var priceToggle = document.getElementById('price-toggle');
   if (priceToggle) {
@@ -288,18 +264,4 @@
       setPricesVisible(!pricesAreVisible());
     });
   }
-
-  // Al enviar el formulario con precios ocultos, restaurar el valor guardado
-  document.querySelectorAll('form').forEach(function (form) {
-    form.addEventListener('submit', function () {
-      form.querySelectorAll('[data-price-value]').forEach(function (input) {
-        if (!pricesAreVisible()) {
-          var stored = input.getAttribute('data-price-value') || '';
-          input.value = stored;
-        } else if (input.value !== '') {
-          input.setAttribute('data-price-value', input.value);
-        }
-      });
-    });
-  });
 })();

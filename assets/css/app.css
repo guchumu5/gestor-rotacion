@@ -195,15 +195,8 @@ html:not(.prices-visible) [data-price-col] {
   display: none !important;
 }
 
-body:not(.prices-visible) .price-field-block .price-real-input {
-  -webkit-text-security: disc;
-  color: transparent;
-  text-shadow: 0 0 0 var(--muted);
-}
-
-body:not(.prices-visible) .price-field-block.is-masked .price-real-input {
-  caret-color: transparent;
-}
+/* El input Precio unidad del formulario de movimiento siempre se muestra editable.
+   El ojo solo oculta precios ya guardados (price-wrap / data-price-col). */
 
 .logout-btn {
   border-color: rgba(255, 255, 255, 0.55) !important;
