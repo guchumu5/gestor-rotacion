@@ -10,15 +10,7 @@ $flash = flash_get();
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#c41230">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Rotación">
-  <title><?= e($pageTitle) ?></title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="assets/css/app.css" rel="stylesheet">
+<?php require __DIR__ . '/head_meta.php'; ?>
 </head>
 <body class="app-body">
   <div class="app-shell">

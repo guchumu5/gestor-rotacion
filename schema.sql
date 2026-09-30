@@ -1,5 +1,9 @@
 -- Gestor de rotación — esquema y datos iniciales
 -- Compatible con MySQL 5.7+ / 8.x / MariaDB
+--
+-- movements.price = precio UNITARIO (€). NULL si no se indica.
+-- Total de línea = quantity * price (solo cuando price no es NULL).
+-- Instalaciones ya existentes: ejecutar también sql/migrate_unit_price.sql
 
 CREATE DATABASE IF NOT EXISTS gestor_rotacion
   CHARACTER SET utf8mb4
@@ -32,7 +36,7 @@ CREATE TABLE IF NOT EXISTS movements (
   client_id INT UNSIGNED NOT NULL,
   product_id INT UNSIGNED NOT NULL,
   quantity DECIMAL(12, 2) NOT NULL,
-  amount DECIMAL(12, 2) NOT NULL COMMENT 'Importe total cobrado',
+  price DECIMAL(12, 2) NULL COMMENT 'Precio unitario (€); NULL si no se indica. Total línea = quantity * price',
   note VARCHAR(500) NULL,
   movement_date DATE NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

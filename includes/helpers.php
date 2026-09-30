@@ -69,6 +69,36 @@ function money_es(float|int|string $amount): string
     return number_format((float) $amount, 2, ',', '.') . ' €';
 }
 
+/** Formatea dinero o "—" si no hay precio / total. */
+function money_or_dash(float|int|string|null $amount): string
+{
+    if ($amount === null || $amount === '') {
+        return '—';
+    }
+    return money_es($amount);
+}
+
+/** Precio unitario para listados: "—" si NULL. */
+function unit_price_es(float|int|string|null $price): string
+{
+    if ($price === null || $price === '') {
+        return '—';
+    }
+    return money_es($price);
+}
+
+/**
+ * Total de línea = qty * precio unitario.
+ * Devuelve null si no hay precio (no tratar como 0 €).
+ */
+function line_total(float|int|string $quantity, float|int|string|null $unitPrice): ?float
+{
+    if ($unitPrice === null || $unitPrice === '') {
+        return null;
+    }
+    return (float) $quantity * (float) $unitPrice;
+}
+
 function qty_es(float|int|string $qty): string
 {
     $n = (float) $qty;
@@ -76,6 +106,19 @@ function qty_es(float|int|string $qty): string
         return (string) (int) round($n);
     }
     return number_format($n, 2, ',', '.');
+}
+
+function days_label(int $days): string
+{
+    if ($days === 1) {
+        return '1 día';
+    }
+    return $days . ' días';
+}
+
+function client_url(int $clientId): string
+{
+    return 'cliente.php?id=' . $clientId;
 }
 
 function today_iso(): string

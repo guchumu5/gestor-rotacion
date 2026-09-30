@@ -9,7 +9,7 @@ $movement = null;
 
 if ($editId > 0) {
     $stmt = $pdo->prepare(
-        'SELECT id, client_id, product_id, quantity, amount, note, movement_date
+        'SELECT id, client_id, product_id, quantity, price, note, movement_date
          FROM movements WHERE id = ?'
     );
     $stmt->execute([$editId]);
@@ -39,7 +39,8 @@ if (request_method() === 'POST') {
     $newClientName = post_string('new_client_name');
     $productId = (int) ($_POST['product_id'] ?? 0);
     $quantity = parse_decimal(post_string('quantity'));
-    $amount = parse_decimal(post_string('amount'));
+    $priceRaw = post_string('price');
+    $price = parse_decimal($priceRaw);
     $note = post_string('note');
     $date = post_string('movement_date', today_iso());
 
@@ -59,41 +60,43 @@ if (request_method() === 'POST') {
     if ($error === '' && ($quantity === null || $quantity <= 0)) {
         $error = 'La cantidad tiene que ser mayor que 0.';
     }
-    if ($error === '' && ($amount === null || $amount < 0)) {
-        $error = 'Indica el importe total cobrado.';
+    // Precio opcional: vacío → NULL. Si escriben valor, debe ser >= 0 (incluido 0).
+    if ($error === '' && $priceRaw !== '' && ($price === null || $price < 0)) {
+        $error = 'El precio unidad, si lo pones, tiene que ser 0 o más.';
     }
     if ($error === '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         $error = 'La fecha no es válida.';
     }
 
     if ($error === '') {
+        // Vacío → NULL; no guardar 0 salvo que lo hayan escrito.
+        $priceVal = ($priceRaw === '') ? null : $price;
         $noteVal = $note === '' ? null : (function_exists('mb_substr') ? mb_substr($note, 0, 500) : substr($note, 0, 500));
         if ($editId > 0) {
             $stmt = $pdo->prepare(
                 'UPDATE movements
-                 SET client_id = ?, product_id = ?, quantity = ?, amount = ?, note = ?, movement_date = ?
+                 SET client_id = ?, product_id = ?, quantity = ?, price = ?, note = ?, movement_date = ?
                  WHERE id = ?'
             );
-            $stmt->execute([$clientId, $productId, $quantity, $amount, $noteVal, $date, $editId]);
+            $stmt->execute([$clientId, $productId, $quantity, $priceVal, $noteVal, $date, $editId]);
             flash_set('success', 'Movimiento actualizado.');
             redirect('historial.php');
         }
 
         $stmt = $pdo->prepare(
-            'INSERT INTO movements (client_id, product_id, quantity, amount, note, movement_date)
+            'INSERT INTO movements (client_id, product_id, quantity, price, note, movement_date)
              VALUES (?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$clientId, $productId, $quantity, $amount, $noteVal, $date]);
+        $stmt->execute([$clientId, $productId, $quantity, $priceVal, $noteVal, $date]);
         flash_set('success', 'Movimiento registrado.');
         redirect('index.php');
     }
 
-    // Repoblar formulario tras error
     $movement = [
         'client_id' => $clientId,
         'product_id' => $productId,
         'quantity' => post_string('quantity', '1'),
-        'amount' => post_string('amount'),
+        'price' => $priceRaw,
         'note' => $note,
         'movement_date' => $date,
     ];
@@ -107,7 +110,9 @@ $activeNav = 'registrar';
 $selectedClient = (int) ($movement['client_id'] ?? ($clients[0]['id'] ?? 0));
 $selectedProduct = (int) ($movement['product_id'] ?? ($products[0]['id'] ?? 0));
 $qtyValue = isset($movement['quantity']) ? (string) $movement['quantity'] : '1';
-$amountValue = isset($movement['amount']) ? (string) $movement['amount'] : '';
+$priceValue = array_key_exists('price', (array) $movement) && $movement['price'] !== null
+    ? (string) $movement['price']
+    : '';
 $noteValue = (string) ($movement['note'] ?? '');
 $dateValue = (string) ($movement['movement_date'] ?? today_iso());
 $showNote = $noteValue !== '';
@@ -199,23 +204,17 @@ require __DIR__ . '/includes/header.php';
     </div>
 
     <div class="mb-3">
-      <label class="form-label" for="amount">Importe total cobrado (€)</label>
+      <label class="form-label" for="price">Precio unidad (€) <span class="text-muted fw-normal">opcional</span></label>
       <input
         class="form-control"
         type="text"
         inputmode="decimal"
-        name="amount"
-        id="amount"
-        value="<?= e($amountValue) ?>"
-        placeholder="Ej. 120"
-        required
+        name="price"
+        id="price"
+        value="<?= e($priceValue) ?>"
+        placeholder="Ej. 12 (puedes dejarlo vacío)"
       >
-      <div class="form-text">Precio = total pagado. La unidad se deduce con cantidad.</div>
-    </div>
-
-    <div class="mb-3">
-      <label class="form-label" for="movement_date">Fecha</label>
-      <input class="form-control" type="date" name="movement_date" id="movement_date" value="<?= e($dateValue) ?>" required>
+      <div class="form-text">Precio por unidad. Vacío = sin precio (normal). El total se calcula solo si lo rellenas.</div>
     </div>
 
     <div class="mb-3">
@@ -225,6 +224,11 @@ require __DIR__ . '/includes/header.php';
       <div id="note-block" class="mt-2" <?= $showNote ? '' : 'hidden' ?>>
         <textarea class="form-control" name="note" id="note" maxlength="500" placeholder="Nota breve"><?= e($noteValue) ?></textarea>
       </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="movement_date">Fecha</label>
+      <input class="form-control" type="date" name="movement_date" id="movement_date" value="<?= e($dateValue) ?>" required>
     </div>
 
     <div class="cta-sticky">

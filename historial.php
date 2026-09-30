@@ -12,7 +12,7 @@ $filterProduct = get_string('product_id');
 $filterFrom = get_string('from');
 $filterTo = get_string('to');
 
-$sql = 'SELECT m.id, m.quantity, m.amount, m.note, m.movement_date, m.created_at,
+$sql = 'SELECT m.id, m.client_id, m.quantity, m.price, m.note, m.movement_date, m.created_at,
                c.name AS client_name, p.name AS product_name
         FROM movements m
         INNER JOIN clients c ON c.id = m.client_id
@@ -41,6 +41,13 @@ $sql .= ' ORDER BY m.movement_date DESC, m.created_at DESC LIMIT 300';
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $rows = $stmt->fetchAll();
+
+foreach ($rows as &$row) {
+    $priceRaw = $row['price'];
+    $row['unit_price'] = $priceRaw === null ? null : (float) $priceRaw;
+    $row['line_total'] = line_total($row['quantity'], $row['unit_price']);
+}
+unset($row);
 
 $pageTitle = 'Historial · Gestor de rotación';
 $activeNav = 'historial';
@@ -104,10 +111,11 @@ require __DIR__ . '/includes/header.php';
         <a class="mv-card text-decoration-none text-dark" href="movimiento.php?id=<?= (int) $row['id'] ?>">
           <div class="mv-card-top">
             <strong><?= e($row['client_name']) ?></strong>
-            <strong><?= e(money_es($row['amount'])) ?></strong>
+            <strong><?= e(money_or_dash($row['line_total'])) ?></strong>
           </div>
           <div class="list-meta">
             <?= e($row['movement_date']) ?> · <?= e($row['product_name']) ?> · <?= e(qty_es($row['quantity'])) ?> uds
+            · ud <?= e(unit_price_es($row['unit_price'])) ?>
             <?php if ($row['note']): ?> · <?= e($row['note']) ?><?php endif; ?>
           </div>
         </a>
@@ -123,6 +131,7 @@ require __DIR__ . '/includes/header.php';
               <th>Cliente</th>
               <th>Producto</th>
               <th class="text-end">Cant.</th>
+              <th class="text-end">P. ud</th>
               <th class="text-end">Total</th>
               <th></th>
             </tr>
@@ -131,10 +140,11 @@ require __DIR__ . '/includes/header.php';
             <?php foreach ($rows as $row): ?>
               <tr>
                 <td><?= e($row['movement_date']) ?></td>
-                <td><?= e($row['client_name']) ?></td>
+                <td><a class="client-link" href="<?= e(client_url((int) $row['client_id'])) ?>&amp;back=historial"><?= e($row['client_name']) ?></a></td>
                 <td><?= e($row['product_name']) ?></td>
                 <td class="text-end"><?= e(qty_es($row['quantity'])) ?></td>
-                <td class="text-end"><?= e(money_es($row['amount'])) ?></td>
+                <td class="text-end"><?= e(unit_price_es($row['unit_price'])) ?></td>
+                <td class="text-end"><?= e(money_or_dash($row['line_total'])) ?></td>
                 <td class="text-end"><a href="movimiento.php?id=<?= (int) $row['id'] ?>">Editar</a></td>
               </tr>
             <?php endforeach; ?>

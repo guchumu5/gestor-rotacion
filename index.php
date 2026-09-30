@@ -29,7 +29,7 @@ require __DIR__ . '/includes/header.php';
     <div>
       <p class="eyebrow mb-1" style="color:var(--red)">Hoy</p>
       <h1 class="page-title">Resumen</h1>
-      <p class="page-sub">Medias, mejores clientes y stock orientativo.</p>
+      <p class="page-sub">Medias por producto, stock orientativo y mejores clientes.</p>
     </div>
     <a class="btn btn-brand btn-lg-touch px-3" href="movimiento.php" style="min-height:48px;padding-top:.65rem;padding-bottom:.65rem">+ Añadir</a>
   </div>
@@ -37,55 +37,74 @@ require __DIR__ . '/includes/header.php';
   <?php if ($stats['empty']): ?>
     <div class="panel empty-state">
       <strong>Todavía no hay pedidos</strong>
-      <p class="mb-3">Registra el primero y aquí verás medias mensuales, clientes fuertes y mix de producto.</p>
+      <p class="mb-3">Registra el primero y aquí verás medias por producto, clientes fuertes y stock orientativo.</p>
       <a class="btn btn-brand btn-lg-touch" href="movimiento.php">Registrar primer movimiento</a>
     </div>
   <?php else: ?>
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-label">Media mensual €</div>
-        <div class="stat-value"><?= e(money_es($stats['monthly_avg_amount'])) ?></div>
-        <div class="stat-hint"><?= (int) $stats['month_count'] ?> mes(es) con datos</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Media mensual uds</div>
-        <div class="stat-value"><?= e(qty_es($stats['monthly_avg_quantity'])) ?></div>
-        <div class="stat-hint">Pista de stock</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Media semanal €</div>
-        <div class="stat-value"><?= e(money_es($stats['weekly_avg_amount'])) ?></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Media semanal uds</div>
-        <div class="stat-value"><?= e(qty_es($stats['weekly_avg_quantity'])) ?></div>
-      </div>
-      <div class="stat-card wide">
-        <div class="stat-label">Stock orientativo al mes</div>
-        <div class="stat-value"><?= e(qty_es($stats['stock_hint'])) ?> uds</div>
-        <div class="stat-hint">Basado en la media de cantidad por mes. Ajusta con tu margen de seguridad.</div>
-      </div>
+
+    <div class="panel">
+      <h2>Por producto</h2>
+      <p class="page-sub mb-3">Unidades siempre. Dinero solo si hay precio unidad.</p>
+      <?php foreach ($stats['product_stats'] as $prod): ?>
+        <div class="product-block">
+          <div class="product-block-head">
+            <strong><?= e($prod['name']) ?></strong>
+            <span class="stat-hint"><?= number_format($prod['share'] * 100, 0) ?>% del total uds</span>
+          </div>
+          <div class="product-stats-grid">
+            <div>
+              <div class="stat-label">Este mes</div>
+              <div class="stat-value sm"><?= e(qty_es($prod['this_month_qty'])) ?> uds</div>
+              <div class="stat-hint"><?= e(money_or_dash($prod['this_month_amount_display'])) ?></div>
+            </div>
+            <div>
+              <div class="stat-label">Media mes</div>
+              <div class="stat-value sm"><?= e(qty_es($prod['monthly_avg_quantity'])) ?> uds</div>
+              <div class="stat-hint"><?= e(money_or_dash($prod['monthly_avg_amount'])) ?></div>
+            </div>
+            <div>
+              <div class="stat-label">Media sem.</div>
+              <div class="stat-value sm"><?= e(qty_es($prod['weekly_avg_quantity'])) ?> uds</div>
+              <div class="stat-hint"><?= e(money_or_dash($prod['weekly_avg_amount'])) ?></div>
+            </div>
+            <div>
+              <div class="stat-label">Stock orientativo</div>
+              <div class="stat-value sm"><?= e(qty_es($prod['stock_hint'])) ?> uds</div>
+              <div class="stat-hint">Media mensual de unidades</div>
+            </div>
+          </div>
+          <div class="mix-bar" aria-hidden="true">
+            <div class="mix-fill" style="width:<?= max(0, min(100, (int) round($prod['share'] * 100))) ?>%"></div>
+          </div>
+        </div>
+      <?php endforeach; ?>
     </div>
 
     <div class="panel">
-      <h2>Este mes vs anterior</h2>
+      <h2>Este mes vs anterior <span class="stat-hint">(global)</span></h2>
       <div class="compare-grid mb-2">
         <div class="compare-box">
           <div class="stat-label">Este mes</div>
-          <strong><?= e(money_es($stats['month_compare']['this']['amount'])) ?></strong>
-          <span class="stat-hint"><?= e(qty_es($stats['month_compare']['this']['quantity'])) ?> uds · <?= (int) $stats['month_compare']['this']['count'] ?> pedidos</span>
+          <strong><?= e(qty_es($stats['month_compare']['this']['quantity'])) ?> uds</strong>
+          <span class="stat-hint">
+            <?= e(money_or_dash($stats['month_compare']['this']['priced_count'] > 0 ? $stats['month_compare']['this']['amount'] : null)) ?>
+            · <?= (int) $stats['month_compare']['this']['count'] ?> pedidos
+          </span>
         </div>
         <div class="compare-box" style="background:#f4f4f4">
           <div class="stat-label">Mes anterior</div>
-          <strong style="color:var(--ink)"><?= e(money_es($stats['month_compare']['prev']['amount'])) ?></strong>
-          <span class="stat-hint"><?= e(qty_es($stats['month_compare']['prev']['quantity'])) ?> uds · <?= (int) $stats['month_compare']['prev']['count'] ?> pedidos</span>
+          <strong style="color:var(--ink)"><?= e(qty_es($stats['month_compare']['prev']['quantity'])) ?> uds</strong>
+          <span class="stat-hint">
+            <?= e(money_or_dash($stats['month_compare']['prev']['priced_count'] > 0 ? $stats['month_compare']['prev']['amount'] : null)) ?>
+            · <?= (int) $stats['month_compare']['prev']['count'] ?> pedidos
+          </span>
         </div>
       </div>
       <p class="mb-0">
-        Dinero:
-        <span class="<?= e(delta_class($stats['month_amount_delta'])) ?>"><?= e(format_delta($stats['month_amount_delta'])) ?></span>
-        · Cantidad:
+        Cantidad:
         <span class="<?= e(delta_class($stats['month_qty_delta'])) ?>"><?= e(format_delta($stats['month_qty_delta'])) ?></span>
+        · Dinero:
+        <span class="<?= e(delta_class($stats['month_amount_delta'])) ?>"><?= e(format_delta($stats['month_amount_delta'])) ?></span>
       </p>
     </div>
 
@@ -93,77 +112,73 @@ require __DIR__ . '/includes/header.php';
       <h2>Últimos 30 días</h2>
       <div class="stat-grid">
         <div>
-          <div class="stat-label">Cobrado</div>
-          <div class="stat-value" style="font-size:1.2rem"><?= e(money_es($stats['last30']['amount'])) ?></div>
-          <div class="stat-hint <?= e(delta_class($stats['amount_delta_pct'])) ?>">vs 30 anteriores: <?= e(format_delta($stats['amount_delta_pct'])) ?></div>
-        </div>
-        <div>
           <div class="stat-label">Cantidad</div>
           <div class="stat-value" style="font-size:1.2rem"><?= e(qty_es($stats['last30']['quantity'])) ?></div>
           <div class="stat-hint <?= e(delta_class($stats['quantity_delta_pct'])) ?>">vs 30 anteriores: <?= e(format_delta($stats['quantity_delta_pct'])) ?></div>
+        </div>
+        <div>
+          <div class="stat-label">Cobrado</div>
+          <div class="stat-value" style="font-size:1.2rem"><?= e(money_or_dash($stats['last30']['priced_count'] > 0 ? $stats['last30']['amount'] : null)) ?></div>
+          <div class="stat-hint <?= e(delta_class($stats['amount_delta_pct'])) ?>">vs 30 anteriores: <?= e(format_delta($stats['amount_delta_pct'])) ?></div>
         </div>
       </div>
     </div>
 
     <div class="panel">
+      <h2>Mejores clientes · cantidad</h2>
+      <?php foreach ($stats['best_by_quantity'] as $row): ?>
+        <a class="list-row list-row-link" href="<?= e(client_url((int) $row['id'])) ?>&amp;back=resumen">
+          <div class="list-main">
+            <p class="list-title"><?= e($row['name']) ?></p>
+            <p class="list-meta">
+              <?= (int) $row['count'] ?> pedidos
+              <?php if ($row['by_product']): ?>
+                ·
+                <?php
+                  $bits = [];
+                  foreach ($row['by_product'] as $bp) {
+                      $bits[] = $bp['name'] . ' ' . qty_es($bp['quantity']);
+                  }
+                  echo e(implode(' · ', $bits));
+                ?>
+              <?php endif; ?>
+            </p>
+          </div>
+          <div class="list-value"><?= e(qty_es($row['quantity'])) ?> uds</div>
+        </a>
+      <?php endforeach; ?>
+    </div>
+
+    <div class="panel">
       <h2>Mejores clientes · dinero</h2>
       <?php if (!$stats['best_by_amount']): ?>
-        <p class="text-muted mb-0">Sin datos todavía.</p>
+        <p class="text-muted mb-0">Sin precios registrados todavía.</p>
       <?php else: ?>
         <?php foreach ($stats['best_by_amount'] as $row): ?>
-          <div class="list-row">
+          <a class="list-row list-row-link" href="<?= e(client_url((int) $row['id'])) ?>&amp;back=resumen">
             <div class="list-main">
               <p class="list-title"><?= e($row['name']) ?></p>
-              <p class="list-meta"><?= (int) $row['count'] ?> pedidos</p>
+              <p class="list-meta"><?= (int) $row['priced_count'] ?> con precio</p>
             </div>
             <div class="list-value"><?= e(money_es($row['amount'])) ?></div>
-          </div>
+          </a>
         <?php endforeach; ?>
       <?php endif; ?>
     </div>
 
     <div class="panel">
-      <h2>Mejores clientes · cantidad</h2>
-      <?php foreach ($stats['best_by_quantity'] as $row): ?>
-        <div class="list-row">
-          <div class="list-main">
-            <p class="list-title"><?= e($row['name']) ?></p>
-            <p class="list-meta"><?= (int) $row['count'] ?> pedidos</p>
-          </div>
-          <div class="list-value"><?= e(qty_es($row['quantity'])) ?> uds</div>
-        </div>
-      <?php endforeach; ?>
-    </div>
-
-    <div class="panel">
       <h2>Compra típica por cliente</h2>
       <?php foreach ($stats['client_averages'] as $row): ?>
-        <div class="list-row">
+        <a class="list-row list-row-link" href="<?= e(client_url((int) $row['id'])) ?>&amp;back=resumen">
           <div class="list-main">
             <p class="list-title"><?= e($row['name']) ?></p>
-            <p class="list-meta">Ticket medio / cantidad media</p>
+            <p class="list-meta">Cantidad media / ticket medio (si hay precio)</p>
           </div>
           <div class="list-value">
-            <?= e(money_es($row['avg_amount'])) ?><br>
-            <span class="list-meta"><?= e(qty_es($row['avg_quantity'])) ?> uds</span>
+            <?= e(qty_es($row['avg_quantity'])) ?> uds<br>
+            <span class="list-meta"><?= e(money_or_dash($row['avg_amount'])) ?></span>
           </div>
-        </div>
-      <?php endforeach; ?>
-    </div>
-
-    <div class="panel">
-      <h2>Mix de producto</h2>
-      <?php foreach ($stats['product_mix'] as $row): ?>
-        <div class="mb-3">
-          <div class="d-flex justify-content-between gap-2">
-            <strong><?= e($row['name']) ?></strong>
-            <span><?= e(qty_es($row['quantity'])) ?> uds · <?= number_format($row['share'] * 100, 0) ?>%</span>
-          </div>
-          <div class="mix-bar" aria-hidden="true">
-            <div class="mix-fill" style="width:<?= max(0, min(100, (int) round($row['share'] * 100))) ?>%"></div>
-          </div>
-          <div class="stat-hint"><?= e(money_es($row['amount'])) ?></div>
-        </div>
+        </a>
       <?php endforeach; ?>
     </div>
 
@@ -175,10 +190,16 @@ require __DIR__ . '/includes/header.php';
       <?php foreach ($stats['recent'] as $mv): ?>
         <div class="list-row">
           <div class="list-main">
-            <p class="list-title"><?= e($mv['client_name']) ?> · <?= e($mv['product_name']) ?></p>
-            <p class="list-meta"><?= e($mv['movement_date']) ?> · <?= e(qty_es($mv['quantity'])) ?> uds</p>
+            <p class="list-title">
+              <a class="client-link" href="<?= e(client_url((int) $mv['client_id'])) ?>&amp;back=resumen"><?= e($mv['client_name']) ?></a>
+              · <?= e($mv['product_name']) ?>
+            </p>
+            <p class="list-meta">
+              <?= e($mv['movement_date']) ?> · <?= e(qty_es($mv['quantity'])) ?> uds
+              · ud <?= e(unit_price_es($mv['unit_price'])) ?>
+            </p>
           </div>
-          <div class="list-value"><?= e(money_es($mv['amount'])) ?></div>
+          <div class="list-value"><?= e(money_or_dash($mv['line_total'])) ?></div>
         </div>
       <?php endforeach; ?>
     </div>

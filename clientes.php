@@ -88,16 +88,23 @@ require __DIR__ . '/includes/header.php';
     <?php foreach ($clients as $client): ?>
       <?php $count = client_movement_count($pdo, (int) $client['id']); ?>
       <div class="panel">
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+          <div>
+            <a class="client-link client-link-lg" href="<?= e(client_url((int) $client['id'])) ?>&amp;back=clientes"><?= e($client['name']) ?></a>
+            <?= !(int) $client['active'] ? '<span class="badge text-bg-secondary ms-1">Archivado</span>' : '' ?>
+            <div class="form-text mt-1"><?= $count ?> movimiento(s) · toca el nombre para ver historial y huecos</div>
+          </div>
+          <a class="btn btn-outline-brand btn-sm" href="<?= e(client_url((int) $client['id'])) ?>&amp;back=clientes" style="border-radius:12px;font-weight:700;white-space:nowrap">Ver</a>
+        </div>
         <form method="post" class="mb-2">
           <?= csrf_field() ?>
           <input type="hidden" name="action" value="rename">
           <input type="hidden" name="id" value="<?= (int) $client['id'] ?>">
-          <label class="form-label">Nombre <?= !(int) $client['active'] ? '<span class="badge text-bg-secondary">Archivado</span>' : '' ?></label>
+          <label class="form-label">Renombrar</label>
           <div class="d-flex gap-2">
             <input class="form-control" type="text" name="name" value="<?= e($client['name']) ?>" required>
             <button class="btn btn-outline-brand" type="submit" style="border-radius:14px;font-weight:700">Guardar</button>
           </div>
-          <div class="form-text mt-1"><?= $count ?> movimiento(s) en historial</div>
         </form>
         <div class="action-row">
           <?php if ((int) $client['active']): ?>
